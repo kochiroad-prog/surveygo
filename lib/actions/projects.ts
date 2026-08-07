@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { projectSchema } from "@/lib/validators/project";
+import type { Enums } from "@/lib/supabase/types";
 
 export type ProjectActionState = { error?: string } | null;
 
@@ -71,7 +72,10 @@ export async function toggleEquipmentChecked(checklistId: string, isChecked: boo
   revalidatePath("/projects", "layout");
 }
 
-export async function updateProjectStatus(projectId: string, status: string) {
+export async function updateProjectStatus(
+  projectId: string,
+  status: Enums<"project_status">
+) {
   const supabase = await createClient();
   const { error } = await supabase
     .from("projects")
