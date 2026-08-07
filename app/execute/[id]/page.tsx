@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { OnlineBadge } from "@/components/survey/online-badge";
 import { NewZoneForm } from "@/components/survey/new-zone-form";
 import { ZoneList } from "@/components/survey/zone-list";
+import { LogoutButton } from "@/components/layout/logout-button";
 
 export default async function ExecuteSurveyPage({
   params,
@@ -38,7 +39,10 @@ export default async function ExecuteSurveyPage({
         <Link href={`/projects/${project.id}`} className="flex items-center gap-1.5 text-sm text-muted-foreground">
           <ArrowLeft className="h-4 w-4" /> Kembali
         </Link>
-        <OnlineBadge />
+        <div className="flex items-center gap-3">
+          <OnlineBadge />
+          <LogoutButton variant="compact" />
+        </div>
       </div>
 
       <div className="p-4">

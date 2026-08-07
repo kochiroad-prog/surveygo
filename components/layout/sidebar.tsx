@@ -1,5 +1,7 @@
 import Link from "next/link";
-import { LayoutDashboard, Folder, Wrench, FileText, MapPinned } from "lucide-react";
+import Image from "next/image";
+import { LayoutDashboard, Folder, Wrench, FileText } from "lucide-react";
+import { LogoutButton } from "@/components/layout/logout-button";
 
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -27,9 +29,13 @@ export function Sidebar({
   return (
     <aside className="hidden md:flex w-[190px] shrink-0 flex-col bg-[#121C18] p-3">
       <div className="flex items-center gap-2 px-2 py-2 mb-6">
-        <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-accent">
-          <MapPinned className="h-4 w-4 text-[#04342C]" />
-        </div>
+        <Image
+          src="/logo-mark.png"
+          alt="SiteSurvey Pro"
+          width={28}
+          height={28}
+          className="rounded-lg"
+        />
         <span className="text-sm font-medium text-white">SiteSurvey</span>
       </div>
 
@@ -54,14 +60,17 @@ export function Sidebar({
         })}
       </nav>
 
-      <div className="mt-auto flex items-center gap-2 rounded-lg bg-white/5 p-2.5">
-        <div className="flex h-7 w-7 items-center justify-center rounded-full bg-accent text-[11px] font-medium text-[#04342C]">
-          {initials || "?"}
+      <div className="mt-auto space-y-1">
+        <div className="flex items-center gap-2 rounded-lg bg-white/5 p-2.5">
+          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-accent text-[11px] font-medium text-[#04342C]">
+            {initials || "?"}
+          </div>
+          <div>
+            <div className="text-xs font-medium text-white">{fullName}</div>
+            <div className="text-[10px] text-accent capitalize">{role.replace("_", " ")}</div>
+          </div>
         </div>
-        <div>
-          <div className="text-xs font-medium text-white">{fullName}</div>
-          <div className="text-[10px] text-accent capitalize">{role.replace("_", " ")}</div>
-        </div>
+        <LogoutButton />
       </div>
     </aside>
   );

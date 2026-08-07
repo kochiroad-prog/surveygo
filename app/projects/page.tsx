@@ -29,6 +29,14 @@ export default async function ProjectsPage({
   const { status } = await searchParams;
   const supabase = await createClient();
 
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const { data: profile } = user
+    ? await supabase.from("profiles").select("role").eq("id", user.id).maybeSingle()
+    : { data: null };
+  const canCreate = profile?.role === "admin" || profile?.role === "project_manager";
+
   let query = supabase.from("projects").select("*").order("created_at", { ascending: false });
   if (status) query = query.eq("status", status as never);
   const { data: projects } = await query;
@@ -37,11 +45,13 @@ export default async function ProjectsPage({
     <div className="p-6">
       <div className="mb-5 flex items-center justify-between">
         <h1 className="text-lg font-medium">Project survey</h1>
-        <Button asChild variant="accent" size="sm">
-          <Link href="/projects/new">
-            <Plus className="h-4 w-4" /> Project baru
-          </Link>
-        </Button>
+        {canCreate && (
+          <Button asChild variant="accent" size="sm">
+            <Link href="/projects/new">
+              <Plus className="h-4 w-4" /> Project baru
+            </Link>
+          </Button>
+        )}
       </div>
 
       <div className="mb-4 flex flex-wrap gap-1.5">
@@ -82,7 +92,9 @@ export default async function ProjectsPage({
         ))}
         {(projects ?? []).length === 0 && (
           <div className="col-span-full rounded-xl border border-border bg-card p-8 text-center text-sm text-muted-foreground">
-            Belum ada project untuk status ini.
+            {canCreate
+              ? "Belum ada project untuk status ini."
+              : "Belum ada project yang di-assign ke kamu. Hubungi admin untuk di-assign ke sebuah project."}
           </div>
         )}
       </div>

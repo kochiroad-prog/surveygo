@@ -11,11 +11,19 @@ const STATUS_BADGE_VARIANT: Record<string, "success" | "warning" | "default" | "
   completed: "accent",
 };
 
-export function ProjectList({ projects }: { projects: Tables<"projects">[] }) {
+export function ProjectList({
+  projects,
+  role,
+}: {
+  projects: Tables<"projects">[];
+  role?: string;
+}) {
   if (projects.length === 0) {
     return (
       <div className="rounded-xl border border-border bg-card p-8 text-center text-sm text-muted-foreground">
-        Belum ada project survey. Buat project baru untuk mulai.
+        {role === "surveyor"
+          ? "Belum ada project yang di-assign ke kamu. Hubungi admin untuk di-assign ke sebuah project."
+          : "Belum ada project survey. Buat project baru untuk mulai."}
       </div>
     );
   }

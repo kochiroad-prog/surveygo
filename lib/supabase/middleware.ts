@@ -29,8 +29,16 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const isAuthRoute = request.nextUrl.pathname.startsWith("/login");
-  const isPublicAsset = request.nextUrl.pathname.startsWith("/_next");
+  const pathname = request.nextUrl.pathname;
+  const isAuthRoute = pathname.startsWith("/login") || pathname.startsWith("/register");
+  const isPublicAsset =
+    pathname.startsWith("/_next") ||
+    pathname === "/manifest.webmanifest" ||
+    pathname === "/sw.js" ||
+    pathname === "/favicon.ico" ||
+    pathname.startsWith("/icon-") ||
+    pathname === "/apple-touch-icon.png" ||
+    pathname === "/logo-mark.png";
 
   if (!user && !isAuthRoute && !isPublicAsset) {
     const url = request.nextUrl.clone();

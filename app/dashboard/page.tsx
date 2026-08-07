@@ -11,13 +11,21 @@ export default async function DashboardPage() {
   startOfMonth.setDate(1);
   startOfMonth.setHours(0, 0, 0, 0);
 
-  const [projectsRes, checklistsRes, itemsRes, templatesRes] = await Promise.all([
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const [projectsRes, checklistsRes, itemsRes, templatesRes, profileRes] = await Promise.all([
     supabase.from("projects").select("*").order("created_at", { ascending: false }),
     supabase.from("equipment_checklists").select("is_checked"),
     supabase.from("survey_items").select("condition_status"),
     supabase.from("equipment_templates").select("*"),
+    user
+      ? supabase.from("profiles").select("role").eq("id", user.id).maybeSingle()
+      : Promise.resolve({ data: null }),
   ]);
 
+  const role = profileRes.data?.role;
   const projects = projectsRes.data ?? [];
   const checklists = checklistsRes.data ?? [];
   const items = itemsRes.data ?? [];
@@ -60,7 +68,7 @@ export default async function DashboardPage() {
         </div>
 
         <div className="grid grid-cols-1 gap-3.5 lg:grid-cols-[2fr_1fr]">
-          <ProjectList projects={projects.slice(0, 6)} />
+          <ProjectList projects={projects.slice(0, 6)} role={role} />
           <EquipmentWidget templates={templates} />
         </div>
       </div>
