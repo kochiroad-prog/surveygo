@@ -33,6 +33,23 @@ export async function createProject(
 
   if (!user) return { error: "Sesi berakhir, silakan login ulang." };
 
+  const { data: profile, error: profileError } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  if (profileError) {
+    console.error("createProject: gagal ambil profile", user.id, profileError);
+    return { error: `Gagal cek role akun: ${profileError.message}` };
+  }
+
+  if (!profile || (profile.role !== "admin" && profile.role !== "project_manager")) {
+    return {
+      error: `Role akun kamu ("${profile?.role ?? "tidak ditemukan"}") tidak diizinkan membuat project. Hubungi admin untuk diubah jadi admin/project_manager.`,
+    };
+  }
+
   const { data, error } = await supabase
     .from("projects")
     .insert({
@@ -49,7 +66,17 @@ export async function createProject(
     .single();
 
   if (error) {
-    return { error: error.message };
+    console.error("createProject insert failed", {
+      userId: user.id,
+      role: profile.role,
+      code: error.code,
+      details: error.details,
+      hint: error.hint,
+      message: error.message,
+    });
+    return {
+      error: `${error.message}${error.hint ? " — " + error.hint : ""} (code: ${error.code ?? "n/a"}, role terdeteksi: ${profile.role})`,
+    };
   }
 
   revalidatePath("/dashboard");
