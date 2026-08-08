@@ -1,4 +1,5 @@
 import { Sidebar } from "@/components/layout/sidebar";
+import { MobileTopBar, MobileBottomNav } from "@/components/layout/mobile-nav";
 import { createClient } from "@/lib/supabase/server";
 
 export async function AppShell({
@@ -31,7 +32,11 @@ export async function AppShell({
   return (
     <div className="flex min-h-screen bg-background">
       <Sidebar fullName={fullName} role={role} activeHref={activeHref} />
-      <div className="flex-1 min-w-0">{children}</div>
+      <div className="flex min-w-0 flex-1 flex-col">
+        <MobileTopBar />
+        <div className="flex-1 pb-16 md:pb-0">{children}</div>
+        <MobileBottomNav activeHref={activeHref} />
+      </div>
     </div>
   );
 }
