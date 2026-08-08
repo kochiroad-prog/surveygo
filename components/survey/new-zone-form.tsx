@@ -1,22 +1,63 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useState, useTransition } from "react";
 import { Plus, X } from "lucide-react";
-import { createZone, type SurveyActionState } from "@/lib/actions/survey";
+import { zoneSchema } from "@/lib/validators/survey";
+import { insertRowOfflineFirst } from "@/lib/offline/sync";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import type { Tables } from "@/lib/supabase/types";
 
-export function NewZoneForm({ projectId }: { projectId: string }) {
+export function NewZoneForm({
+  projectId,
+  onCreated,
+}: {
+  projectId: string;
+  onCreated: (zone: Tables<"survey_zones">) => void;
+}) {
   const [open, setOpen] = useState(false);
-  const boundAction = createZone.bind(null, projectId);
-  const [state, formAction, isPending] = useActionState<SurveyActionState, FormData>(
-    boundAction,
-    null
-  );
+  const [error, setError] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
 
-  if (state?.success && open) {
-    setOpen(false);
+  function handleSubmit(formData: FormData) {
+    const parsed = zoneSchema.safeParse({
+      zone_name: String(formData.get("zone_name") || ""),
+      floor_level: String(formData.get("floor_level") || ""),
+      length: formData.get("length") || undefined,
+      width: formData.get("width") || undefined,
+      height: formData.get("height") || undefined,
+    });
+
+    if (!parsed.success) {
+      setError(parsed.error.issues[0]?.message ?? "Data tidak valid");
+      return;
+    }
+    setError(null);
+
+    const now = new Date().toISOString();
+    const row: Tables<"survey_zones"> = {
+      id: crypto.randomUUID(),
+      project_id: projectId,
+      zone_name: parsed.data.zone_name,
+      floor_level: parsed.data.floor_level || null,
+      length: parsed.data.length ?? null,
+      width: parsed.data.width ?? null,
+      height: parsed.data.height ?? null,
+      client_generated_id: null,
+      created_at: now,
+      updated_at: now,
+    };
+
+    startTransition(async () => {
+      const result = await insertRowOfflineFirst("survey_zones", row, projectId);
+      if (!result.ok) {
+        setError(result.error);
+        return;
+      }
+      onCreated(row);
+      setOpen(false);
+    });
   }
 
   if (!open) {
@@ -29,7 +70,7 @@ export function NewZoneForm({ projectId }: { projectId: string }) {
 
   return (
     <form
-      action={formAction}
+      action={handleSubmit}
       className="space-y-3 rounded-xl border border-border bg-card p-4"
     >
       <div className="flex items-center justify-between">
@@ -60,7 +101,7 @@ export function NewZoneForm({ projectId }: { projectId: string }) {
           <Input id="height" name="height" type="number" step="0.01" min="0" />
         </div>
       </div>
-      {state?.error && <p className="text-xs text-danger">{state.error}</p>}
+      {error && <p className="text-xs text-danger">{error}</p>}
       <Button type="submit" variant="accent" size="sm" className="w-full" disabled={isPending}>
         {isPending ? "Menyimpan..." : "Simpan zona"}
       </Button>

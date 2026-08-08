@@ -1,4 +1,4 @@
-const CACHE_NAME = "sitesurvey-pro-v1";
+const CACHE_NAME = "sitesurvey-pro-v2";
 const PRECACHE_URLS = [
   "/manifest.webmanifest",
   "/icon-192.png",

@@ -3,8 +3,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { OnlineBadge } from "@/components/survey/online-badge";
-import { NewZoneForm } from "@/components/survey/new-zone-form";
-import { ZoneList } from "@/components/survey/zone-list";
+import { ExecuteBoard } from "@/components/survey/execute-board";
 import { LogoutButton } from "@/components/layout/logout-button";
 
 export default async function ExecuteSurveyPage({
@@ -48,11 +47,7 @@ export default async function ExecuteSurveyPage({
       <div className="p-4">
         <h1 className="mb-4 text-base font-medium">{project.title}</h1>
 
-        <div className="mb-4">
-          <NewZoneForm projectId={project.id} />
-        </div>
-
-        <ZoneList projectId={project.id} zones={zones} items={items} />
+        <ExecuteBoard projectId={project.id} initialZones={zones} initialItems={items} />
       </div>
     </div>
   );

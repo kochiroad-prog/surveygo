@@ -8,6 +8,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { SurveyItemForm } from "@/components/survey/survey-item-form";
 import { MoistureWarning, LuxWarning } from "@/components/survey/warning-badge";
+import { PhotoUpload } from "@/components/photo/photo-upload";
 import { calcArea, calcVolume } from "@/lib/utils";
 import { CONDITION_LABEL, SURVEY_CATEGORY_LABEL } from "@/lib/constants/thresholds";
 import type { Tables } from "@/lib/supabase/types";
@@ -22,10 +23,12 @@ export function ZoneList({
   projectId,
   zones,
   items,
+  onItemCreated,
 }: {
   projectId: string;
   zones: Tables<"survey_zones">[];
   items: Tables<"survey_items">[];
+  onItemCreated?: (item: Tables<"survey_items">) => void;
 }) {
   if (zones.length === 0) {
     return (
@@ -86,7 +89,14 @@ export function ZoneList({
                   </div>
                 ))}
 
-                <SurveyItemForm projectId={projectId} zoneId={zone.id} />
+                <div className="flex flex-wrap gap-2">
+                  <SurveyItemForm
+                    projectId={projectId}
+                    zoneId={zone.id}
+                    onCreated={(item) => onItemCreated?.(item)}
+                  />
+                  <PhotoUpload projectId={projectId} zoneId={zone.id} />
+                </div>
               </div>
             </AccordionContent>
           </AccordionItem>

@@ -11,6 +11,8 @@ import {
   TabsContent,
 } from "@/components/ui/tabs";
 import { ChecklistMatrix } from "@/components/equipment/checklist-matrix";
+import { PhotoGallery } from "@/components/photo/photo-gallery";
+import { PdfPreviewLoader } from "@/components/report/pdf-preview-loader";
 import { formatDate } from "@/lib/utils";
 import { PROJECT_STATUS_LABEL, PROJECT_TYPE_LABEL } from "@/lib/constants/thresholds";
 
@@ -21,24 +23,45 @@ const STATUS_BADGE_VARIANT: Record<string, "success" | "warning" | "default" | "
   completed: "accent",
 };
 
+const VALID_TABS = ["equipment", "execution", "photos", "export"];
+
 export default async function ProjectDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ tab?: string }>;
 }) {
   const { id } = await params;
+  const { tab } = await searchParams;
+  const defaultTab = tab && VALID_TABS.includes(tab) ? tab : "equipment";
   const supabase = await createClient();
 
   const [projectRes, checklistRes, zonesRes] = await Promise.all([
     supabase.from("projects").select("*").eq("id", id).maybeSingle(),
     supabase.from("equipment_checklists").select("*").eq("project_id", id),
-    supabase.from("survey_zones").select("id, zone_name").eq("project_id", id),
+    supabase.from("survey_zones").select("*").eq("project_id", id),
   ]);
 
   if (!projectRes.data) notFound();
   const project = projectRes.data;
   const checklists = checklistRes.data ?? [];
   const zones = zonesRes.data ?? [];
+  const zoneIds = zones.map((z) => z.id);
+
+  // survey_items and survey_photos are keyed by zone_id, not project_id.
+  const [itemsRes, photosRes] = zoneIds.length
+    ? await Promise.all([
+        supabase.from("survey_items").select("*").in("zone_id", zoneIds),
+        supabase
+          .from("survey_photos")
+          .select("*")
+          .in("zone_id", zoneIds)
+          .order("created_at", { ascending: false }),
+      ])
+    : [{ data: [] }, { data: [] }];
+  const items = itemsRes.data ?? [];
+  const photos = photosRes.data ?? [];
 
   return (
     <div>
@@ -68,7 +91,7 @@ export default async function ProjectDetailPage({
       </div>
 
       <div className="p-6">
-        <Tabs defaultValue="equipment">
+        <Tabs defaultValue={defaultTab}>
           <TabsList>
             <TabsTrigger value="equipment">Pre-Survey & Peralatan</TabsTrigger>
             <TabsTrigger value="execution">Survey Execution</TabsTrigger>
@@ -111,15 +134,11 @@ export default async function ProjectDetailPage({
           </TabsContent>
 
           <TabsContent value="photos">
-            <div className="rounded-xl border border-border bg-card p-8 text-center text-sm text-muted-foreground">
-              Galeri foto & dokumentasi 360° — menyusul di fase berikutnya.
-            </div>
+            <PhotoGallery projectId={project.id} photos={photos} zones={zones} />
           </TabsContent>
 
           <TabsContent value="export">
-            <div className="rounded-xl border border-border bg-card p-8 text-center text-sm text-muted-foreground">
-              Export laporan PDF — menyusul di fase berikutnya.
-            </div>
+            <PdfPreviewLoader project={project} zones={zones} items={items} checklists={checklists} />
           </TabsContent>
         </Tabs>
       </div>
